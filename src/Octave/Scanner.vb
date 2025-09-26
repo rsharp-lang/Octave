@@ -1,3 +1,4 @@
+Imports System.Net.Mime.MediaTypeNames
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Text
 Imports Microsoft.VisualBasic.Text.Parser
@@ -30,9 +31,13 @@ Public Class Scanner
 
         Do While Not code
             If Not (token = walkChar(++code)) Is Nothing Then
-
+                Yield CType(token, Token)
             End If
         Loop
+
+        If buffer > 0 Then
+            Yield getToken(Nothing)
+        End If
     End Function
 
     Private Function walkChar(c As Char) As Token
@@ -72,6 +77,23 @@ Public Class Scanner
     End Function
 
     Private Function getToken(Optional bufferNext As Char? = Nothing) As Token
+        If buffer = 0 Then
+            If Not bufferNext Is Nothing Then
+                buffer += bufferNext
+            End If
 
+            Return Nothing
+        End If
+
+        Dim text As New String(buffer.PopAllChars)
+
+        If escape.comment Then
+            Return New Token With {.name = TokenType.comment, .text = Text}
+        End If
+
+        Return New Token With {
+            .name = TokenType.invalid,
+            .text = text
+        }
     End Function
 End Class
