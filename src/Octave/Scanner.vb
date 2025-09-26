@@ -47,7 +47,8 @@ Public Class Scanner
     End Function
 
     Shared ReadOnly shortOperators As Index(Of Char) = {"+"c, "-"c, "*"c, "/"c, "\"c, "^"c, ":"c, ";"c}
-    Shared ReadOnly whitespace As Index(Of Char) = {ASCII.TAB, " "c, ASCII.CR, ASCII.LF}
+    Shared ReadOnly whitespace As Index(Of Char) = {ASCII.TAB, " "c}
+    Shared ReadOnly newLine As Index(Of Char) = {ASCII.CR, ASCII.LF}
 
     Shared ReadOnly open As Index(Of Char) = {"("c, "{"c, "["c}
     Shared ReadOnly close As Index(Of Char) = {")"c, "}"c, "]"c}
@@ -131,7 +132,9 @@ Public Class Scanner
             buffer += c
             Return token
         ElseIf c Like whitespace Then
-            Return getToken(Nothing)
+            Return getToken()
+        ElseIf c Like newLine Then
+            Return getToken(c)
         ElseIf c Like shortOperators Then
             Dim token As Token = getToken(Nothing)
             buffer += c
@@ -145,7 +148,7 @@ Public Class Scanner
                 ElseIf buffer.Last = "."c AndAlso code.Current = "."c Then
                     ' ...
                     buffer.Pop()
-                    Dim token As Token = getToken(c)
+                    Dim token As Token = getToken()
                     buffer += c
                     buffer += c
                     Return token
@@ -156,6 +159,14 @@ Public Class Scanner
                 buffer += c
             End If
         ElseIf buffer Like shortOperators Then
+            Dim token As Token = getToken(Nothing)
+            buffer += c
+            Return token
+        ElseIf Char.IsDigit(c) AndAlso buffer > 0 AndAlso (
+            buffer.Last Like open OrElse
+            buffer.Last Like close OrElse
+            buffer.Last Like shortOperators) Then
+
             Dim token As Token = getToken(Nothing)
             buffer += c
             Return token
@@ -180,12 +191,16 @@ Public Class Scanner
 
         Dim text As New String(buffer.PopAllChars)
 
+        If Not bufferNext Is Nothing Then
+            buffer += bufferNext
+        End If
+
         If escape.comment Then
             Return New Token With {.name = TokenType.comment, .text = text}
         End If
 
         Select Case text
-            Case "+", "-", "*", "=", "/", "\", ">", "<", "~", "<=", ">="
+            Case "+", "-", "*", "=", "/", "\", ">", "<", "~", "~=", "<=", ">=", "^", "&&", "||"
                 Return New Token With {.text = text, .name = TokenType.operator}
             Case ";"
                 Return New Token With {.text = text, .name = TokenType.terminator}
@@ -195,6 +210,10 @@ Public Class Scanner
                 Return New Token With {.text = text, .name = TokenType.open}
             Case ")", "]", "}"
                 Return New Token With {.text = text, .name = TokenType.close}
+            Case " ", vbTab
+                Return Nothing
+            Case vbCr, vbLf
+                Return New Token With {.text = "\n", .name = TokenType.newLine}
         End Select
 
         If text.IsPattern(identifier) Then

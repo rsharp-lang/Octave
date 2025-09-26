@@ -11,8 +11,8 @@ Module syntaxParserTest
 
         '%}
         'x = 3.")
-        '        Call run("x = 1+2+3...
-        '+5+6;")
+        Call run("x = 1.36*(2+3. ...
+        +5)+6;")
         ' Call run("disp('hello world!');")
         Call run("disp(['a' 'b' 'c']);")
     End Sub
@@ -26,5 +26,7 @@ Module syntaxParserTest
             .ToArray
 
         Call Console.WriteLine(strs.JoinBy(" "))
+
+        Dim program = ProgramBuilder.CreateProgram(tokens).ToArray
     End Sub
 End Module
