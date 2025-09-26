@@ -4,13 +4,15 @@ Imports Octave
 Module syntaxParserTest
 
     Sub run()
-        Call run("x = 3 # value 3 is assigned to symbol x")
-        Call run("x = 3 % value 3 is assigned to symbol x")
-        Call run("
-%{
+        '        Call run("x = 3 # value 3 is assigned to symbol x")
+        '        Call run("x = 3 % value 3 is assigned to symbol x")
+        '        Call run("
+        '%{
 
-%}
-x = 3.")
+        '%}
+        'x = 3.")
+        Call run("x = 1+2+3...
++5+6;")
     End Sub
 
     Private Sub run(script As String)

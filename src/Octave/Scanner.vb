@@ -106,10 +106,29 @@ Public Class Scanner
             Dim token As Token = getToken(Nothing)
             buffer += c
             Return token
-        ElseIf c = "." AndAlso buffer.isInteger Then
-            ' xx.
+        ElseIf c = "." Then
+            If buffer > 0 Then
+                If buffer.isInteger Then
+                    ' xx.
+                    buffer += c
+                    Return Nothing
+                ElseIf buffer.Last = "."c AndAlso code.Current = "."c Then
+                    ' ...
+                    buffer.Pop()
+                    Dim token As Token = getToken(c)
+                    buffer += c
+                    buffer += c
+                    Return token
+                Else
+                    buffer += c
+                End If
+            Else
+                buffer += c
+            End If
+        ElseIf buffer Like shortOperators Then
+            Dim token As Token = getToken(Nothing)
             buffer += c
-            Return Nothing
+            Return token
         Else
             buffer += c
         End If
@@ -118,6 +137,7 @@ Public Class Scanner
     End Function
 
     Const identifier As String = "^[a-zA-Z][a-zA-Z0-9_]*$"
+    Const lineContinue As String = "..."
 
     Private Function getToken(Optional bufferNext As Char? = Nothing) As Token
         If buffer = 0 Then
@@ -136,10 +156,11 @@ Public Class Scanner
 
         Select Case text
             Case "+", "-", "*", "=", "/", "\", ">", "<", "~", "<=", ">="
-                Return New Token With {
-                    .text = text,
-                    .name = TokenType.operator
-                }
+                Return New Token With {.text = text, .name = TokenType.operator}
+            Case ";"
+                Return New Token With {.text = text, .name = TokenType.terminator}
+            Case "..."
+                Return New Token With {.text = text, .name = TokenType.lineContinue}
         End Select
 
         If text.IsPattern(identifier) Then
