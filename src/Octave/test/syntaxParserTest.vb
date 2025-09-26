@@ -1,4 +1,5 @@
-﻿Imports Octave
+﻿Imports Microsoft.VisualBasic.ApplicationServices.Terminal
+Imports Octave
 
 Module syntaxParserTest
 
@@ -15,7 +16,9 @@ x = 3")
     Private Sub run(script As String)
         Dim scanner As New Scanner(script)
         Dim tokens = scanner.GetTokens.ToArray
+        Dim highlight As New ConsoleFormat(AnsiColor.BrightBlue, Underline:=True)
+        Dim strs As String() = tokens.Select(Function(t) $"{t.text}/{New TextSpan(t.name.ToString, highlight)}/").ToArray
 
-        Pause()
+        Call Console.WriteLine(strs.JoinBy(" "))
     End Sub
 End Module

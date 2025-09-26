@@ -1,4 +1,5 @@
 Imports System.Net.Mime.MediaTypeNames
+Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Text
 Imports Microsoft.VisualBasic.Text.Parser
@@ -40,6 +41,9 @@ Public Class Scanner
         End If
     End Function
 
+    Shared ReadOnly shortOperators As Index(Of Char) = {"+"c, "-"c, "*"c, "/"c, "\"c, "^"c, ":"c, ";"c}
+    Shared ReadOnly whitespace As Index(Of Char) = {ASCII.TAB, " "c, ASCII.CR, ASCII.LF}
+
     Private Function walkChar(c As Char) As Token
         If c = ASCII.LF Then
             lineNumber += 1
@@ -52,29 +56,46 @@ Public Class Scanner
                 Else
                     Dim commentText As New String(buffer.PopAllChars)
 
+                    escape.reset()
+
                     Return New Token With {
                         .name = TokenType.comment,
                         .text = commentText
                     }
                 End If
+            ElseIf c = "{"c AndAlso (buffer = "%"c OrElse buffer = "#"c) Then
+                escape.isBlockComment = True
+                buffer += c
             Else
                 buffer += c
             End If
         ElseIf c = "#"c OrElse c = "%"c AndAlso buffer = 0 Then
             escape.comment = True
+            escape.stringEscape = c
             buffer += c
         ElseIf c = "#"c OrElse c = "%"c Then
             ' follow with the expression
             Dim token As Token = getToken(Nothing)
 
+            escape.stringEscape = c
             escape.comment = True
             buffer += c
 
             Return token
+        ElseIf c Like whitespace Then
+            Return getToken(Nothing)
+        ElseIf c Like shortOperators Then
+            Dim token As Token = getToken(Nothing)
+            buffer += c
+            Return token
+        Else
+            buffer += c
         End If
 
         Return Nothing
     End Function
+
+    Const identifier As String = "^[a-zA-Z][a-zA-Z0-9_]*$"
 
     Private Function getToken(Optional bufferNext As Char? = Nothing) As Token
         If buffer = 0 Then
@@ -88,7 +109,24 @@ Public Class Scanner
         Dim text As New String(buffer.PopAllChars)
 
         If escape.comment Then
-            Return New Token With {.name = TokenType.comment, .text = Text}
+            Return New Token With {.name = TokenType.comment, .text = text}
+        End If
+
+        Select Case text
+            Case "+", "-", "*", "=", "/", "\", ">", "<", "~", "<=", ">="
+                Return New Token With {
+                    .text = text,
+                    .name = TokenType.operator
+                }
+        End Select
+
+        If text.IsPattern(identifier) Then
+            Return New Token With {
+                .text = text,
+                .name = TokenType.identifier
+            }
+        ElseIf text.IsPattern("\d+") Then
+            Return New Token With {.name = TokenType.integerLiteral, .text = text}
         End If
 
         Return New Token With {
