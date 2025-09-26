@@ -20,7 +20,7 @@ Public Class Scanner
 
     Sub New(source As [Variant](Of String, CharPtr))
         If source Like GetType(String) Then
-            Me.code = source.TryCast(Of String).SolveStream
+            Me.code = source.TryCast(Of String).SolveStream.LineTokens.JoinBy(ASCII.LF)
         Else
             Me.code = source.TryCast(Of CharPtr)
         End If
@@ -67,7 +67,25 @@ Public Class Scanner
                 escape.isBlockComment = True
                 buffer += c
             Else
-                buffer += c
+                Dim last As Char = buffer.GetLastOrDefault
+                Dim peek As Char = code.Current
+
+                If (last = ASCII.CR OrElse last = ASCII.LF) AndAlso (c = escape.stringEscape AndAlso peek = "}"c) Then
+                    ' end of block comment
+                    buffer += c
+                    buffer += ++code
+
+                    Dim commentText As New String(buffer.PopAllChars)
+
+                    escape.reset()
+
+                    Return New Token With {
+                        .name = TokenType.comment,
+                        .text = commentText
+                    }
+                Else
+                    buffer += c
+                End If
             End If
         ElseIf c = "#"c OrElse c = "%"c AndAlso buffer = 0 Then
             escape.comment = True
@@ -88,6 +106,10 @@ Public Class Scanner
             Dim token As Token = getToken(Nothing)
             buffer += c
             Return token
+        ElseIf c = "." AndAlso buffer.isInteger Then
+            ' xx.
+            buffer += c
+            Return Nothing
         Else
             buffer += c
         End If
@@ -127,6 +149,8 @@ Public Class Scanner
             }
         ElseIf text.IsPattern("\d+") Then
             Return New Token With {.name = TokenType.integerLiteral, .text = text}
+        ElseIf text.IsNumeric Then
+            Return New Token With {.name = TokenType.numberLiteral, .text = text}
         End If
 
         Return New Token With {
