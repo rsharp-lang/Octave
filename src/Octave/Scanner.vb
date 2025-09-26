@@ -44,6 +44,9 @@ Public Class Scanner
     Shared ReadOnly shortOperators As Index(Of Char) = {"+"c, "-"c, "*"c, "/"c, "\"c, "^"c, ":"c, ";"c}
     Shared ReadOnly whitespace As Index(Of Char) = {ASCII.TAB, " "c, ASCII.CR, ASCII.LF}
 
+    Shared ReadOnly open As Index(Of Char) = {"("c, "{"c, "["c}
+    Shared ReadOnly close As Index(Of Char) = {")"c, "}"c, "]"c}
+
     Private Function walkChar(c As Char) As Token
         If c = ASCII.LF Then
             lineNumber += 1
@@ -87,6 +90,18 @@ Public Class Scanner
                     buffer += c
                 End If
             End If
+        ElseIf escape.string Then
+            If c = escape.stringEscape Then
+                buffer += c
+                escape.reset()
+
+                Return New Token With {
+                    .text = New String(buffer.PopAllChars),
+                    .name = TokenType.stringLiteral
+                }
+            Else
+                buffer += c
+            End If
         ElseIf c = "#"c OrElse c = "%"c AndAlso buffer = 0 Then
             escape.comment = True
             escape.stringEscape = c
@@ -99,6 +114,16 @@ Public Class Scanner
             escape.comment = True
             buffer += c
 
+            Return token
+        ElseIf c = "'"c OrElse c = """"c Then
+            Dim token As Token = getToken(Nothing)
+            buffer += c
+            escape.string = True
+            escape.stringEscape = c
+            Return token
+        ElseIf c Like open OrElse c Like close Then
+            Dim token As Token = getToken(Nothing)
+            buffer += c
             Return token
         ElseIf c Like whitespace Then
             Return getToken(Nothing)
@@ -161,6 +186,10 @@ Public Class Scanner
                 Return New Token With {.text = text, .name = TokenType.terminator}
             Case "..."
                 Return New Token With {.text = text, .name = TokenType.lineContinue}
+            Case "(", "[", "{"
+                Return New Token With {.text = text, .name = TokenType.open}
+            Case ")", "]", "}"
+                Return New Token With {.text = text, .name = TokenType.close}
         End Select
 
         If text.IsPattern(identifier) Then
