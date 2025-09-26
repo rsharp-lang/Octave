@@ -13,7 +13,8 @@ Module syntaxParserTest
         'x = 3.")
         '        Call run("x = 1+2+3...
         '+5+6;")
-        Call run("disp('hello world!');")
+        ' Call run("disp('hello world!');")
+        Call run("disp(['a' 'b' 'c']);")
     End Sub
 
     Private Sub run(script As String)

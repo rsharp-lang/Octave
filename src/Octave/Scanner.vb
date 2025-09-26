@@ -16,7 +16,7 @@ Public Class Scanner
     ''' 当前的代码行号
     ''' </summary>
     Dim lineNumber As Integer = 1
-
+    Dim lastToken As Token
 
     Sub New(source As [Variant](Of String, CharPtr))
         If source Like GetType(String) Then
@@ -32,13 +32,18 @@ Public Class Scanner
 
         Do While Not code
             If Not (token = walkChar(++code)) Is Nothing Then
-                Yield CType(token, Token)
+                Yield Finalize(CType(token, Token))
             End If
         Loop
 
         If buffer > 0 Then
-            Yield getToken(Nothing)
+            Yield Finalize(getToken(Nothing))
         End If
+    End Function
+
+    Private Overloads Function Finalize(t As Token) As Token
+        lastToken = t
+        Return t
     End Function
 
     Shared ReadOnly shortOperators As Index(Of Char) = {"+"c, "-"c, "*"c, "/"c, "\"c, "^"c, ":"c, ";"c}
