@@ -9,7 +9,7 @@ Public Module ProgramBuilder
 
     Public Iterator Function CreateProgram(tokens As IEnumerable(Of Token)) As IEnumerable(Of Expression)
         For Each line As Token() In tokens.SplitLines
-            Dim blocks = line.SplitByTopLevelDelimiter(TokenType.close, , ")")
+            Dim blocks = line.SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
             Dim expr As Expression = SyntaxTree.BuildExpression(blocks)
 
             Yield expr
