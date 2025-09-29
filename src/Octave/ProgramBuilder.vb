@@ -9,11 +9,20 @@ Public Module ProgramBuilder
 
     Public Iterator Function CreateProgram(tokens As IEnumerable(Of Token)) As IEnumerable(Of Expression)
         For Each line As Token() In tokens.SplitLines
-            Dim blocks = line.SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
+            Dim blocks = line.TrimTerminator.SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
             Dim expr As Expression = SyntaxTree.BuildExpression(blocks)
 
             Yield expr
         Next
+    End Function
+
+    <Extension>
+    Public Function TrimTerminator(line As Token()) As IEnumerable(Of Token)
+        If line.Any AndAlso line.Last = (TokenType.terminator, ";") Then
+            Return line.Take(line.Length - 1)
+        End If
+
+        Return line
     End Function
 
     <Extension>
