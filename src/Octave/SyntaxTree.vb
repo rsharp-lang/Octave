@@ -19,7 +19,10 @@ Module SyntaxTree
             Dim value As Token = blocks(0)(0)
 
             Select Case value.name
-                Case TokenType.identifier : Return New SymbolReference(value.text)
+                Case TokenType.identifier,
+                     TokenType.keyword
+
+                    Return New SymbolReference(value.text)
                 Case TokenType.integerLiteral,
                      TokenType.missingLiteral,
                      TokenType.numberLiteral,
