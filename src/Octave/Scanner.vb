@@ -1,4 +1,3 @@
-Imports System.Net.Mime.MediaTypeNames
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Text
@@ -6,7 +5,7 @@ Imports Microsoft.VisualBasic.Text.Parser
 Imports SMRUCC.Rsharp.Language
 Imports SMRUCC.Rsharp.Language.TokenIcer
 
-Public Class Scanner
+Public Class Scanner : Implements IScanner
 
     Dim code As CharPtr
     Dim buffer As New CharBuffer
@@ -26,7 +25,7 @@ Public Class Scanner
         End If
     End Sub
 
-    Public Overridable Iterator Function GetTokens() As IEnumerable(Of Token)
+    Public Overridable Iterator Function GetTokens() As IEnumerable(Of Token) Implements IScanner.GetTokens
         Dim token As New Value(Of Token)
         Dim start As Integer = 0
 
