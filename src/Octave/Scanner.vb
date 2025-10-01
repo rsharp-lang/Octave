@@ -1,5 +1,7 @@
+Imports System.Runtime.InteropServices
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.Language
+Imports Microsoft.VisualBasic.Scripting.TokenIcer
 Imports Microsoft.VisualBasic.Text
 Imports Microsoft.VisualBasic.Text.Parser
 Imports SMRUCC.Rsharp.Language
@@ -19,7 +21,10 @@ Public Class Scanner : Implements IScanner
 
     Sub New(source As [Variant](Of String, CharPtr))
         If source Like GetType(String) Then
-            Me.code = source.TryCast(Of String).SolveStream.LineTokens.JoinBy(ASCII.LF)
+            Me.code = source.TryCast(Of String) _
+                .SolveStream _
+                .LineTokens _
+                .JoinBy(ASCII.LF)
         Else
             Me.code = source.TryCast(Of CharPtr)
         End If
@@ -31,17 +36,34 @@ Public Class Scanner : Implements IScanner
 
         Do While Not code
             If Not (token = walkChar(++code)) Is Nothing Then
-                Yield Finalize(CType(token, Token))
+                Yield Finalize(CType(token, Token), start)
             End If
         Loop
 
         If buffer > 0 Then
-            Yield Finalize(getToken(Nothing))
+            Yield Finalize(getToken(Nothing), start)
         End If
     End Function
 
-    Private Overloads Function Finalize(t As Token) As Token
+    Private Overloads Function Finalize(t As Token, <Out> ByRef start As Integer) As Token
+        t.span = New CodeSpan With {
+            .start = start,
+            .stops = code.Position,
+            .line = lineNumber
+        }
+        start = code.Position
         lastToken = t
+
+        Select Case t.name
+            Case TokenType.comment : escape.comment = False
+            Case TokenType.stringLiteral,
+                 TokenType.stringInterpolation,
+                 TokenType.cliShellInvoke,
+                 TokenType.regexp
+
+                escape.string = False
+        End Select
+
         Return t
     End Function
 

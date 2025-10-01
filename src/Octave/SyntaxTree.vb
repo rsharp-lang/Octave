@@ -10,34 +10,47 @@ Imports SMRUCC.Rsharp.Language.TokenIcer
 Module SyntaxTree
 
     Public Function BuildExpression(blocks As List(Of Token()), opts As SyntaxBuilderOptions) As SyntaxResult
-        If blocks > 3 Then
+        If blocks >= 3 Then
+            ' a = b
+            ' a + b
             If blocks(1).Length = 1 AndAlso blocks(1)(0) = (TokenType.operator, "=") Then
                 ' is symbol assigned
                 Return SymbolValueAssigned(symbol:=blocks(0)(0), blocks.Skip(2), opts)
             End If
 
             Return BinaryTree.ParseBinaryExpression(blocks, opts)
-        ElseIf blocks = 1 AndAlso blocks(0).Length = 1 Then
-            Dim value As Token = blocks(0)(0)
+        ElseIf blocks = 1 Then
+            If blocks(0).Length = 1 Then
+                Return ParseValue(blocks(0)(0), opts)
+            Else
+                blocks = blocks(0) _
+                    .SplitByTopLevelDelimiter(TokenType.close)
 
-            Select Case value.name
-                Case TokenType.identifier,
-                     TokenType.keyword
-
-                    Return New SymbolReference(value.text)
-                Case TokenType.integerLiteral,
-                     TokenType.missingLiteral,
-                     TokenType.numberLiteral,
-                     TokenType.stringLiteral,
-                     TokenType.booleanLiteral
-
-                    Return New Literal(value)
-                Case Else
-                    Throw New SyntaxErrorException($"{value.text}/{value.name}/")
-            End Select
+                If blocks.Count = 2 AndAlso blocks.Last(0).name = TokenType.close Then
+                    Return opts.ParseExpression(blocks(0).Skip(1))
+                End If
+            End If
         End If
 
         Throw New SyntaxErrorException(blocks.IteratesALL.Select(Function(t) $"{t.text}/{t.name}/").JoinBy(" "))
+    End Function
+
+    Private Function ParseValue(value As Token, opts As SyntaxBuilderOptions) As SyntaxResult
+        Select Case value.name
+            Case TokenType.identifier,
+                 TokenType.keyword
+
+                Return New SymbolReference(value.text)
+            Case TokenType.integerLiteral,
+                 TokenType.missingLiteral,
+                 TokenType.numberLiteral,
+                 TokenType.stringLiteral,
+                 TokenType.booleanLiteral
+
+                Return New Literal(value)
+            Case Else
+                Throw New SyntaxErrorException($"{value.text}/{value.name}/")
+        End Select
     End Function
 
     Public Function SymbolValueAssigned(symbol As Token, valueTokens As IEnumerable(Of Token()), opts As SyntaxBuilderOptions) As SyntaxResult

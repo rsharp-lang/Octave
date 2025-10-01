@@ -15,6 +15,8 @@ Public Module ProgramBuilder
         For Each line As SyntaxResult In tokens.CreateProgramInternal(opts)
             If line.isException Then
                 Throw New SyntaxErrorException(line.error.ToString)
+            Else
+                Call lines.Add(line.expression)
             End If
         Next
 
@@ -39,8 +41,10 @@ Public Module ProgramBuilder
 
     <Extension>
     Public Function TrimTerminator(line As Token()) As IEnumerable(Of Token)
-        If line.Any AndAlso line.Last = (TokenType.terminator, ";") Then
-            Return line.Take(line.Length - 1)
+        If line.Any Then
+            If line.Last = (TokenType.terminator, ";") Then
+                Return line.Take(line.Length - 1).ToArray.TrimTerminator
+            End If
         End If
 
         Return line

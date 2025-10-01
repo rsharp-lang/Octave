@@ -15,6 +15,23 @@ Module BinaryTree
         Dim buf As New List(Of [Variant](Of SyntaxResult, String))
         Dim oplist As New List(Of String)
         Dim lineNum As Integer = tokenBlocks(Scan0)(Scan0).span.line
+        Dim index As i32 = 1
+
+        For i As Integer = Scan0 To tokenBlocks.Count - 1
+            If ++index Mod 2 = 0 Then
+                ' should be an operator token
+                Call buf.Add(tokenBlocks(i)(0).text)
+                Call oplist.Add(buf.Last.VB)
+            Else
+                Dim result = opts.ParseExpression(tokenBlocks(i))
+
+                If result.isException Then
+                    Return result
+                Else
+                    Call buf.Add(result)
+                End If
+            End If
+        Next
 
         Return buf.ParseBinaryExpression(opts, oplist:=oplist, lineNum:=lineNum)
     End Function
