@@ -1,5 +1,7 @@
 ﻿Imports Microsoft.VisualBasic.ApplicationServices.Terminal
 Imports Octave
+Imports SMRUCC.Rsharp.Interpreter
+Imports SMRUCC.Rsharp.Runtime
 Imports SMRUCC.Rsharp.Runtime.Components
 
 Module syntaxParserTest
@@ -29,8 +31,8 @@ Module syntaxParserTest
         Call Console.WriteLine(strs.JoinBy(" "))
 
         Dim program = ProgramBuilder.CreateProgram(tokens, New OctaveSyntaxBuilderOptions(Rscript.AutoHandleScript(script)))
-
-
+        Dim engine As New RInterpreter With {.strict = False}
+        Dim result = engine.Run(program)
 
     End Sub
 End Module
