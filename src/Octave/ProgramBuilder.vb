@@ -32,7 +32,7 @@ Public Module ProgramBuilder
         Dim blocks As List(Of Token()) = tokens.ToArray _
             .TrimTerminator _
             .SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
-        Dim expr As SyntaxResult = SyntaxTree.BuildExpression(blocks)
+        Dim expr As SyntaxResult = SyntaxTree.BuildExpression(blocks, opts)
 
         Return expr
     End Function

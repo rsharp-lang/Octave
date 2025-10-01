@@ -9,12 +9,14 @@ Imports SMRUCC.Rsharp.Language.TokenIcer
 
 Module SyntaxTree
 
-    Public Function BuildExpression(blocks As List(Of Token())) As SyntaxResult
+    Public Function BuildExpression(blocks As List(Of Token()), opts As SyntaxBuilderOptions) As SyntaxResult
         If blocks > 3 Then
             If blocks(1).Length = 1 AndAlso blocks(1)(0) = (TokenType.operator, "=") Then
                 ' is symbol assigned
-                Return SymbolValueAssigned(symbol:=blocks(0)(0), blocks.Skip(2))
+                Return SymbolValueAssigned(symbol:=blocks(0)(0), blocks.Skip(2), opts)
             End If
+
+            Return BinaryTree.ParseBinaryExpression(blocks, opts)
         ElseIf blocks = 1 AndAlso blocks(0).Length = 1 Then
             Dim value As Token = blocks(0)(0)
 
@@ -38,8 +40,8 @@ Module SyntaxTree
         Throw New SyntaxErrorException(blocks.IteratesALL.Select(Function(t) $"{t.text}/{t.name}/").JoinBy(" "))
     End Function
 
-    Public Function SymbolValueAssigned(symbol As Token, valueTokens As IEnumerable(Of Token())) As SyntaxResult
-        Dim value As SyntaxResult = SyntaxTree.BuildExpression(valueTokens.AsList)
+    Public Function SymbolValueAssigned(symbol As Token, valueTokens As IEnumerable(Of Token()), opts As SyntaxBuilderOptions) As SyntaxResult
+        Dim value As SyntaxResult = SyntaxTree.BuildExpression(valueTokens.AsList, opts)
         Dim assign As ValueAssignExpression
 
         If value.isException Then
