@@ -14,9 +14,9 @@ Module syntaxParserTest
 
         '%}
         'x = 3.")
-        Call run("x = 1.36*(2+3. ...
-        +5)/(6+9.333);")
-        ' Call run("disp('hello world!');")
+        'Call run("x = 1.36*(2+3. ...
+        '+5)/(6+9.333);")
+        Call run("disp('hello world!');")
         Call run("disp(['a' 'b' 'c']);")
     End Sub
 

@@ -27,12 +27,22 @@ Module SyntaxTree
                     .SplitByTopLevelDelimiter(TokenType.close)
 
                 If blocks.Count = 2 AndAlso blocks.Last(0).name = TokenType.close Then
-                    Return opts.ParseExpression(blocks(0).Skip(1))
+                    If blocks(0).First.name = TokenType.open Then
+                        Return opts.ParseExpression(blocks(0).Skip(1))
+                    Else
+                        ' function invoke
+                        ' a(...)
+
+                    End If
                 End If
             End If
         End If
 
         Throw New SyntaxErrorException(blocks.IteratesALL.Select(Function(t) $"{t.text}/{t.name}/").JoinBy(" "))
+    End Function
+
+    Private Function ParseInvoke()
+
     End Function
 
     Private Function ParseValue(value As Token, opts As SyntaxBuilderOptions) As SyntaxResult
