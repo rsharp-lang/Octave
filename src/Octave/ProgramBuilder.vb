@@ -1,5 +1,7 @@
-﻿Imports System.Runtime.CompilerServices
+﻿Imports System.Data
+Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.Language
+Imports SMRUCC.Rsharp.Interpreter
 Imports SMRUCC.Rsharp.Interpreter.ExecuteEngine
 Imports SMRUCC.Rsharp.Language
 Imports SMRUCC.Rsharp.Language.Syntax.SyntaxParser
@@ -7,13 +9,32 @@ Imports SMRUCC.Rsharp.Language.TokenIcer
 
 Public Module ProgramBuilder
 
-    Public Iterator Function CreateProgram(tokens As IEnumerable(Of Token)) As IEnumerable(Of Expression)
-        For Each line As Token() In tokens.SplitLines
-            Dim blocks = line.TrimTerminator.SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
-            Dim expr As Expression = SyntaxTree.BuildExpression(blocks)
+    Public Function CreateProgram(tokens As IEnumerable(Of Token), opts As SyntaxBuilderOptions) As Program
+        Dim lines As New List(Of Expression)
 
-            Yield expr
+        For Each line As SyntaxResult In tokens.CreateProgramInternal(opts)
+            If line.isException Then
+                Throw New SyntaxErrorException(line.error.ToString)
+            End If
         Next
+
+        Return New Program(lines)
+    End Function
+
+    <Extension>
+    Private Iterator Function CreateProgramInternal(tokens As IEnumerable(Of Token), opts As SyntaxBuilderOptions) As IEnumerable(Of SyntaxResult)
+        For Each line As Token() In tokens.SplitLines
+            Yield ParseExpression(line, opts)
+        Next
+    End Function
+
+    Public Function ParseExpression(tokens As IEnumerable(Of Token), opts As SyntaxBuilderOptions) As SyntaxResult
+        Dim blocks As List(Of Token()) = tokens.ToArray _
+            .TrimTerminator _
+            .SplitByTopLevelDelimiter(TokenType.operator, includeKeyword:=True)
+        Dim expr As Expression = SyntaxTree.BuildExpression(blocks)
+
+        Return expr
     End Function
 
     <Extension>

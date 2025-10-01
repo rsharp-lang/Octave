@@ -5,7 +5,7 @@ Imports SMRUCC.Rsharp.Language.TokenIcer
 Public Class OctaveSyntaxBuilderOptions : Inherits SyntaxBuilderOptions
 
     Public Overrides Function ParseExpression(tokens As IEnumerable(Of Token)) As SyntaxResult
-        Throw New NotImplementedException()
+        Return ProgramBuilder.ParseExpression(tokens, Me)
     End Function
 
     Public Overrides Function NewScanner(buffer As CharPtr, stringInterpolateParser As Boolean) As IScanner
