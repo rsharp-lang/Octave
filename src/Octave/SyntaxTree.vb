@@ -1,15 +1,15 @@
 ﻿Imports System.Data
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
-Imports SMRUCC.Rsharp.Interpreter.ExecuteEngine
 Imports SMRUCC.Rsharp.Interpreter.ExecuteEngine.ExpressionSymbols.DataSets
 Imports SMRUCC.Rsharp.Interpreter.ExecuteEngine.ExpressionSymbols.Operators
 Imports SMRUCC.Rsharp.Language
+Imports SMRUCC.Rsharp.Language.Syntax.SyntaxParser
 Imports SMRUCC.Rsharp.Language.TokenIcer
 
 Module SyntaxTree
 
-    Public Function BuildExpression(blocks As List(Of Token())) As Expression
+    Public Function BuildExpression(blocks As List(Of Token())) As SyntaxResult
         If blocks > 3 Then
             If blocks(1).Length = 1 AndAlso blocks(1)(0) = (TokenType.operator, "=") Then
                 ' is symbol assigned
@@ -38,9 +38,15 @@ Module SyntaxTree
         Throw New SyntaxErrorException(blocks.IteratesALL.Select(Function(t) $"{t.text}/{t.name}/").JoinBy(" "))
     End Function
 
-    Public Function SymbolValueAssigned(symbol As Token, valueTokens As IEnumerable(Of Token())) As Expression
-        Dim value As Expression = SyntaxTree.BuildExpression(valueTokens.AsList)
-        Dim assign As New ValueAssignExpression(symbol.text, value)
+    Public Function SymbolValueAssigned(symbol As Token, valueTokens As IEnumerable(Of Token())) As SyntaxResult
+        Dim value As SyntaxResult = SyntaxTree.BuildExpression(valueTokens.AsList)
+        Dim assign As ValueAssignExpression
+
+        If value.isException Then
+            Return value
+        Else
+            assign = New ValueAssignExpression(symbol.text, value.expression)
+        End If
 
         Return assign
     End Function
